@@ -1,0 +1,29 @@
+cabal-version:      2.4
+name:               grasslands
+version:            0.1.0.0
+synopsis:           A minimal Haskell library
+description:        The barest bones Haskell library possible
+license:            MIT
+author:             Your Name
+maintainer:         your.email@example.com
+category:           Library
+build-type:         Simple
+
+library
+    exposed-modules:  Grasslands
+    build-depends:    base >=4.14 && <5
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+test-suite grasslands-test
+    type:             exitcode-stdio-1.0
+    main-is:          Main.hs
+    build-depends:    base >=4.14 && <5,
+                      grasslands,
+                      hspec
+    hs-source-dirs:   test
+    default-language: Haskell2010
+
+source-repository head
+    type:     git
+    location: https://github.com/robertDurst/grasslands.git

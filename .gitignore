@@ -1,4 +1,51 @@
+# Stack
+.stack-work/
+.stack-work-install/
+
+# Cabal
+dist/
 dist-newstyle/
-.ghc.environment.*
+cabal.project.local
+cabal.project.local~
+*.cabal
+
+# GHC
 *.hi
 *.o
+*.dyn_*
+
+# Editor files
+*~
+*.swp
+*.swo
+.DS_Store
+
+# IDE specific files
+.idea/
+.hie/
+.hie-dir/
+
+# Logs
+*.log
+
+# Local development files
+.env
+.env.local
+
+# Test and benchmark results
+benchmark-results/
+*.tix
+*.mix
+
+# HPC
+.hpc/
+
+# HLS
+.hls/
+
+# VSCode
+.vscode/
+
+# Nix
+result
+result-*

@@ -1,26 +1,32 @@
-.PHONY: run build test clean install
+.PHONY: build run test clean
 
-# Default target runs build + tests
-all: build test
+# Compiler and flags
+GHC = ghc
+GHC_FLAGS = -Wall -O2
+TEST_FILE = test/Tests.hs
 
-# Optionally update index and build manually
-install:
-	cabal update
-	cabal build
-
-# Build (no update by default)
+# Build the project
 build:
-	cabal build
+	$(GHC) $(GHC_FLAGS) -ilib -itest -o grass lib/Main.hs
 
-# Run tests directly (no install dependency)
-test:
-	cabal test
-
-# "Run" for a library: run tests as a simple demo
+# Run the program
 run: build
-	@echo "Running grasslands library demo via tests..."
-	cabal test
+	./grass
+
+# Run tests
+test:
+	runghc -ilib -itest $(TEST_FILE)
 
 # Clean build artifacts
 clean:
-	cabal clean
+	rm -f grass
+	rm -f *.hi *.o
+	rm -f lib/*.hi lib/*.o
+	rm -f test/*.hi test/*.o
+
+# Install dependencies (only GHC and HSpec are needed)
+setup:
+	ghc --version
+	ghc-pkg list | grep hspec || echo "HSpec not found. Run: cabal install hspec"
+	cabal update
+	cabal install --dependencies-only

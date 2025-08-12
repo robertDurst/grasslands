@@ -1,39 +1,31 @@
-name: Haskell CI
+name: CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "**" ]
+    branches: [ main ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Haskell (GHC and Cabal)
-        uses: haskell/actions/setup@v2
-        with:
-          ghc-version: latest
-          cabal-version: latest
-
-      - name: Cache Cabal store
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cabal/store
-            dist-newstyle
-          key: ${{ runner.os }}-cabal-${{ hashFiles('**/*.cabal') }}
-          restore-keys: |
-            ${{ runner.os }}-cabal-
-
-      - name: Update package index
-        run: cabal update
-
-      - name: Build
-        run: cabal build --enable-tests
-
-      - name: Test
-        run: cabal test --test-show-details=direct
+    - uses: actions/checkout@v3
+    
+    - name: Set up GHC
+      uses: haskell/actions/setup@v2
+      with:
+        ghc-version: '9.4.7'
+    
+    - name: Install HSpec
+      run: |
+        mkdir -p ~/.config/ghc/
+        ghc-pkg list | grep hspec || cabal update && cabal install hspec
+    
+    - name: Build and test
+      run: |
+        make test
+    
+    - name: Build executable
+      run: |
+        make build

@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         cabal update
-        cabal install --global hspec
+        cabal install --lib hspec
     
     - name: Build and test
       run: |

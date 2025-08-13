@@ -15,7 +15,7 @@ jobs:
     - name: Set up GHC
       uses: haskell/actions/setup@v2
       with:
-        ghc-version: '9.4.7'
+        ghc-version: '9.12.2'
     
     - name: Install HSpec
       run: |

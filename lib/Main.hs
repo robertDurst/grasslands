@@ -1,7 +1,9 @@
-module Lib
+module Main
   ( lexicalAnalysis,
     parser,
     semanticAnalysis,
+    main,
+    makeComponent,
     Token (..),
     Component (..),
     System (..),
@@ -9,5 +11,9 @@ module Lib
 where
 
 import Lexer (Token (..), lexicalAnalysis)
-import Parser (Component (..), System (..), parser)
+import Parser (Component (..), System (..), makeComponent, parser)
 import SemanticAnalyzer (semanticAnalysis)
+
+main :: IO ()
+main = do
+  putStrLn "Welcome to the Grasslands Compiler!"

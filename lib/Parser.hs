@@ -1,5 +1,6 @@
 module Parser
   ( parser,
+    makeComponent,
     Component (..),
     System (..),
   )
@@ -18,6 +19,10 @@ data Component = Component
     dependencies :: [String]
   }
   deriving (Show, Eq)
+
+makeComponent :: String -> Double -> [String] -> Component
+makeComponent name uptimeExpectation dependencies =
+  Component {name = name, uptimeExpectation = uptimeExpectation, dependencies = dependencies}
 
 parser :: [Token] -> System
 parser tokens = System {systemComponents = parseComponents tokens}

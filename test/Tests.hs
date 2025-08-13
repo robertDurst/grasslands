@@ -25,25 +25,72 @@ main = hspec $ do
         Lib.lexicalAnalysis "1.1%" `shouldBe` [Lib.PercentageToken 1.1]
 
   describe "Parser" $ do
-    it "should return an AST" $ do
-      Lib.parser [] `shouldBe` ""
+    describe "Empty List" $ do
+      it "should return a System" $ do
+        Lib.parser [] `shouldBe` Lib.System {Lib.systemComponents = []}
+    describe "Simple System" $ do
+      it "should return a System" $
+        do
+          Lib.parser $ Lib.lexicalAnalysis "AwesomeReact expects an uptime of 99.9% and depends on StableBackend and ReliableAuthentication."
+          `shouldBe` Lib.System
+            { Lib.systemComponents =
+                [ Lib.Component
+                    { Lib.name = "AwesomeReact",
+                      Lib.uptimeExpectation = 99.9,
+                      Lib.dependencies =
+                        [ "StableBackend",
+                          "ReliableAuthentication"
+                        ]
+                    }
+                ]
+            }
 
   describe "Semantic Analysis" $ do
-    it "should return an AST" $ do
-      Lib.semanticAnalysis "" `shouldBe` ""
+    describe "Empty System" $ do
+      it "should return True" $ do
+        Lib.semanticAnalysis Lib.System {Lib.systemComponents = []} `shouldBe` True
+    describe "Invalid Simple System" $ do
+      it "should return False if mentions non-existent dependencies" $ do
+        Lib.semanticAnalysis
+          ( Lib.System
+              { Lib.systemComponents =
+                  [ Lib.Component
+                      { Lib.name = "AwesomeReact",
+                        Lib.uptimeExpectation = 99.9,
+                        Lib.dependencies =
+                          [ "StableBackend",
+                            "ReliableAuthentication"
+                          ]
+                      }
+                  ]
+              }
+          )
+          `shouldBe` False
 
-  describe "IR Generation" $ do
-    it "should return an IR" $ do
-      Lib.irGeneration "" `shouldBe` ""
-
-  describe "Optimization" $ do
-    it "should return an IR" $ do
-      Lib.optimization "" `shouldBe` ""
-
-  describe "Code Generation" $ do
-    it "should return a String" $ do
-      Lib.codeGeneration "" `shouldBe` ""
-
-  describe "Linking and Assembly" $ do
-    it "should return a String" $ do
-      Lib.linkingAndAssembly "" `shouldBe` ""
+    describe "Valid Simple System" $ do
+      it "should return True if all dependencies exist" $ do
+        Lib.semanticAnalysis
+          ( Lib.System
+              { Lib.systemComponents =
+                  [ Lib.Component
+                      { Lib.name = "AwesomeReact",
+                        Lib.uptimeExpectation = 99.9,
+                        Lib.dependencies =
+                          [ "StableBackend",
+                            "ReliableAuthentication"
+                          ]
+                      },
+                    Lib.Component
+                      { Lib.name = "StableBackend",
+                        Lib.uptimeExpectation = 99.95,
+                        Lib.dependencies = []
+                      },
+                    Lib.Component
+                      { Lib.name = "ReliableAuthentication",
+                        Lib.uptimeExpectation = 99.99,
+                        Lib.dependencies = []
+                      }
+                  ]
+              }
+          )
+          `shouldBe` True

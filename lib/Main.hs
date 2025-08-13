@@ -11,9 +11,11 @@ module Main
   )
 where
 
+import Component (Component (..), makeComponent)
 import Lexer (Token (..), lexicalAnalysis)
-import Parser (Component (..), System (..), makeComponent, parser)
+import Parser (parser)
 import SemanticAnalyzer (semanticAnalysis)
+import System (System (..))
 
 verifySystem :: String -> Bool
 verifySystem = semanticAnalysis . parser . lexicalAnalysis

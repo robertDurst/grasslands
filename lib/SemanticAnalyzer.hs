@@ -1,6 +1,7 @@
 module SemanticAnalyzer (semanticAnalysis) where
 
-import Parser (Component (..), System (..))
+import Component (Component (..))
+import System (System (..))
 
 semanticAnalysis :: System -> Bool
 semanticAnalysis system = all validComponent (systemComponents system)

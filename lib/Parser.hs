@@ -1,29 +1,10 @@
-module Parser
-  ( parser,
-    makeComponent,
-    Component (..),
-    System (..),
-  )
-where
+module Parser (parser) where
 
+import Component (Component (..))
 import Control.Applicative ((<|>))
 import Lexer (Token (..))
+import System (System (..))
 import Text.Parsec hiding ((<|>))
-
-data System = System
-  {systemComponents :: [Component]}
-  deriving (Show, Eq)
-
-data Component = Component
-  { name :: String,
-    uptimeExpectation :: Double,
-    dependencies :: [String]
-  }
-  deriving (Show, Eq)
-
-makeComponent :: String -> Double -> [String] -> Component
-makeComponent name uptimeExpectation dependencies =
-  Component {name = name, uptimeExpectation = uptimeExpectation, dependencies = dependencies}
 
 type TokenParser = Parsec [Token] ()
 

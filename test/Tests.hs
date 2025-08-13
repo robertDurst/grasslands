@@ -15,7 +15,7 @@ main = hspec $ do
         lexicalAnalysis "hello world" `shouldBe` [WordToken "hello", WordToken "world"]
     describe "Periods" $ do
       it "should tokenize period" $ do
-        lexicalAnalysis "." `shouldBe` [PeriodToken]
+        lexicalAnalysis "." `shouldBe` [SeperatorToken]
     describe "Percentages" $ do
       it "should throw error for empty percentages" $ do
         evaluate (lexicalAnalysis "%") `shouldThrow` anyErrorCall

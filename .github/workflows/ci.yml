@@ -17,10 +17,10 @@ jobs:
       with:
         ghc-version: '9.12.2'
     
-    - name: Install HSpec
+    - name: Install dependencies
       run: |
-        mkdir -p ~/.config/ghc/
-        ghc-pkg list | grep hspec || cabal update && cabal install hspec
+        cabal update
+        cabal install --global hspec
     
     - name: Build and test
       run: |

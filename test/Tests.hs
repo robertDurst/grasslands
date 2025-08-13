@@ -1,13 +1,28 @@
 module Main (main) where
 
+import Control.Exception (evaluate)
 import Lib qualified
 import Test.Hspec
 
 main :: IO ()
 main = hspec $ do
   describe "Lexical Analysis" $ do
-    it "should return a list of tokens" $ do
-      Lib.lexicalAnalysis "" `shouldBe` []
+    describe "Empty String" $ do
+      it "should return an empty list for an empty string" $ do
+        Lib.lexicalAnalysis "" `shouldBe` []
+    describe "Words" $ do
+      it "should tokenize words" $ do
+        Lib.lexicalAnalysis "hello world" `shouldBe` [Lib.WordToken "hello", Lib.WordToken "world"]
+    describe "Periods" $ do
+      it "should tokenize period" $ do
+        Lib.lexicalAnalysis "." `shouldBe` [Lib.PeriodToken]
+    describe "Percentages" $ do
+      it "should throw error for empty percentages" $ do
+        evaluate (Lib.lexicalAnalysis "%") `shouldThrow` anyErrorCall
+      it "should tokenize int percentage" $ do
+        Lib.lexicalAnalysis "1%" `shouldBe` [Lib.PercentageToken 1]
+      it "should tokenize float percentage" $ do
+        Lib.lexicalAnalysis "1.1%" `shouldBe` [Lib.PercentageToken 1.1]
 
   describe "Parser" $ do
     it "should return an AST" $ do

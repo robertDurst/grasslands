@@ -1,0 +1,5 @@
+AwesomeReact expects an uptime of 99.9% and depends on StableBackend and ReliableAuthentication.
+StableBackend expects an uptime of 99.95% and depends on CriticalThirdParty and BackendDatabase.
+ReliableAuthentication expects an uptime of 99.995% and depends on AuthenticationDatabase.
+BackendDatabase expects an uptime of 99.99% and depends on nothing.
+AuthenticationDatabase expects an uptime of 99.99% and depends on nothing.

@@ -49,3 +49,6 @@ benchmark-results/
 # Nix
 result
 result-*
+
+# Grasslands
+grass

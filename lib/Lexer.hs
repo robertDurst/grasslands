@@ -4,7 +4,10 @@ module Lexer
   )
 where
 
-import Data.Char (isAlpha, isDigit, isSpace)
+import Control.Applicative ((<|>))
+import Data.Char (isAlpha)
+import Text.Parsec hiding ((<|>))
+import Text.Parsec.String
 
 data Token
   = PercentageToken Double
@@ -13,34 +16,43 @@ data Token
   deriving (Show, Eq)
 
 lexicalAnalysis :: String -> [Token]
-lexicalAnalysis "" = []
-lexicalAnalysis input@(c : cs)
-  | isAlpha c =
-      let (word, rest) = lexWord input
-       in WordToken word : lexicalAnalysis rest
-  | isDigit c =
-      let (number, rest) = lexNumber input
-       in case rest of
-            ('%' : rest') -> PercentageToken (read number) : lexicalAnalysis rest'
-            _ -> errorWithoutStackTrace ("Expected '%' after number: " ++ number)
-  | isSpace c = lexicalAnalysis cs
-  | otherwise = case c of
-      '.' -> PeriodToken : lexicalAnalysis cs
-      '%' -> errorWithoutStackTrace "Expected '%' after number. '%' found alone"
-      _ -> errorWithoutStackTrace ("Unexpected character: " ++ [c])
+lexicalAnalysis input =
+  case parse tokenizer "" input of
+    Left err -> error $ "Lexical analysis failed: " ++ show err
+    Right tokens -> tokens
 
-lexWord :: String -> (String, String)
-lexWord = span isAlpha
+tokenizer :: Parser [Token]
+tokenizer = do
+  skipWhitespace
+  tokens <- many (try (parseToken <* skipWhitespace))
+  eof
+  return tokens
+  where
+    skipWhitespace = skipMany (space <|> newline)
 
-lexInt :: String -> (String, String)
-lexInt = span isDigit
+parseToken :: Parser Token
+parseToken = percentageToken <|> wordToken <|> periodToken
 
--- New helper: parses an integer or decimal number
-lexNumber :: String -> (String, String)
-lexNumber input =
-  let (intPart, afterInt) = lexInt input
-   in case afterInt of
-        ('.' : cs) ->
-          let (fracPart, afterFrac) = lexInt cs
-           in (intPart ++ "." ++ fracPart, afterFrac)
-        _ -> (intPart, afterInt)
+percentageToken :: Parser Token
+percentageToken = do
+  num <- number
+  _ <- char '%'
+  return $ PercentageToken num
+
+wordToken :: Parser Token
+wordToken = do
+  word <- many1 (satisfy isAlpha)
+  return $ WordToken word
+
+periodToken :: Parser Token
+periodToken = do
+  _ <- char '.'
+  return PeriodToken
+
+number :: Parser Double
+number = do
+  intPart <- many1 digit
+  fracPart <- optionMaybe (char '.' >> many1 digit)
+  case fracPart of
+    Nothing -> return $ read intPart
+    Just frac -> return $ read (intPart ++ "." ++ frac)

@@ -21,6 +21,7 @@ jobs:
       run: |
         cabal update
         cabal install --lib hspec
+        cabal install --lib parsec
     
     - name: Build and test
       run: |

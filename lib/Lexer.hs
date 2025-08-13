@@ -12,7 +12,6 @@ data Token
   | PeriodToken
   deriving (Show, Eq)
 
--- Step 1: Lexical Analysis
 lexicalAnalysis :: String -> [Token]
 lexicalAnalysis "" = []
 lexicalAnalysis input@(c : cs)
@@ -20,12 +19,7 @@ lexicalAnalysis input@(c : cs)
       let (word, rest) = lexWord input
        in WordToken word : lexicalAnalysis rest
   | isDigit c =
-      let (intPart, afterInt) = lexInt input
-          (number, rest) = case afterInt of
-            ('.' : cs') ->
-              let (fracPart, afterFrac) = lexInt cs'
-               in (intPart ++ "." ++ fracPart, afterFrac)
-            _ -> (intPart, afterInt)
+      let (number, rest) = lexNumber input
        in case rest of
             ('%' : rest') -> PercentageToken (read number) : lexicalAnalysis rest'
             _ -> errorWithoutStackTrace ("Expected '%' after number: " ++ number)
@@ -40,3 +34,13 @@ lexWord = span isAlpha
 
 lexInt :: String -> (String, String)
 lexInt = span isDigit
+
+-- New helper: parses an integer or decimal number
+lexNumber :: String -> (String, String)
+lexNumber input =
+  let (intPart, afterInt) = lexInt input
+   in case afterInt of
+        ('.' : cs) ->
+          let (fracPart, afterFrac) = lexInt cs
+           in (intPart ++ "." ++ fracPart, afterFrac)
+        _ -> (intPart, afterInt)

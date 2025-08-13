@@ -1,7 +1,7 @@
 module Tests (main) where
 
 import Control.Exception (evaluate)
-import Main (Component (..), System (..), Token (..), lexicalAnalysis, makeComponent, parser, semanticAnalysis)
+import Main (Component (..), System (..), Token (..), lexicalAnalysis, makeComponent, parser, semanticAnalysis, verifySystem)
 import Test.Hspec
 
 main :: IO ()
@@ -37,6 +37,15 @@ main = hspec $ do
                 [ makeComponent "AwesomeReact" 99.9 ["StableBackend", "ReliableAuthentication"]
                 ]
             }
+    describe "Component with no dependencies" $ do
+      it "should parse 'depends on nothing' as empty dependency list" $
+        do
+          parser $ lexicalAnalysis "Database expects an uptime of 99.99% and depends on nothing."
+          `shouldBe` System
+            { systemComponents =
+                [ makeComponent "Database" 99.99 []
+                ]
+            }
 
   describe "Semantic Analysis" $ do
     describe "Empty System" $ do
@@ -66,3 +75,14 @@ main = hspec $ do
               }
           )
           `shouldBe` True
+
+  describe "Verify System" $ do
+    describe "Valid System" $ do
+      it "should return True if all dependencies exist" $ do
+        input <- readFile "examples/simple_system.grass"
+        verifySystem input `shouldBe` True
+
+    describe "Invalid System" $ do
+      it "should return False if mentions non-existent dependencies" $ do
+        input <- readFile "examples/invalid_simple_system.grass"
+        verifySystem input `shouldBe` False

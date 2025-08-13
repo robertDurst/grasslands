@@ -6,5 +6,6 @@ semanticAnalysis :: System -> Bool
 semanticAnalysis system = all validComponent (systemComponents system)
   where
     validComponent component =
-      let componentDeps = dependencies component
-       in all (`elem` map name (systemComponents system)) componentDeps
+      all (`elem` map name (systemComponents system)) componentDeps
+      where
+        componentDeps = dependencies component

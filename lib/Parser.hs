@@ -9,8 +9,7 @@ where
 import Lexer (Token (..))
 
 data System = System
-  { systemComponents :: [Component]
-  }
+  {systemComponents :: [Component]}
   deriving (Show, Eq)
 
 data Component = Component
@@ -24,38 +23,45 @@ makeComponent :: String -> Double -> [String] -> Component
 makeComponent name uptimeExpectation dependencies =
   Component {name = name, uptimeExpectation = uptimeExpectation, dependencies = dependencies}
 
+-- Entry point
 parser :: [Token] -> System
-parser tokens = System {systemComponents = parseComponents tokens}
+parser = System . go
+  where
+    go [] = []
+    go ts = case parseComponent ts of
+      Just (c, rest) -> c : go rest
+      Nothing -> []
 
-parseComponents :: [Token] -> [Component]
-parseComponents [] = []
-parseComponents tokens = case parseComponent tokens of
-  Just (component, remaining) -> component : parseComponents remaining
-  Nothing -> []
-
+-- Component parser
 parseComponent :: [Token] -> Maybe (Component, [Token])
 parseComponent tokens = do
-  (name, rest1) <- parseName tokens
-  rest2 <- expectWord "expects" rest1
-  rest3 <- expectWord "an" rest2
-  rest4 <- expectWord "uptime" rest3
-  rest5 <- expectWord "of" rest4
-  (uptime, rest6) <- parseUptime rest5
-  rest7 <- expectWord "and" rest6
-  rest8 <- expectWord "depends" rest7
-  rest9 <- expectWord "on" rest8
-  (dependencies, rest10) <- parseDependencies rest9
-  let component =
-        Component
-          { name = name,
-            uptimeExpectation = uptime,
-            dependencies = dependencies
-          }
-  return (component, rest10)
+  (n, t1) <- satisfyWord tokens
+  t2 <- expectWords ["expects", "an", "uptime", "of"] t1
+  (uptime, t3) <- satisfyPercentage t2
+  t4 <- expectWords ["and", "depends", "on"] t3
+  (deps, t5) <- parseDependencies t4
+  rest <- expectPeriod t5
+  pure (Component n uptime deps, rest)
 
-parseName :: [Token] -> Maybe (String, [Token])
-parseName (WordToken name : rest) = Just (name, rest)
-parseName _ = Nothing
+-- Dependency list parser
+parseDependencies :: [Token] -> Maybe ([String], [Token])
+parseDependencies tokens = case satisfyWord tokens of
+  Just ("nothing", rest) -> Just ([], rest)  -- Special case: "nothing" means no dependencies
+  _ -> go [] tokens
+  where
+    go acc ts = case satisfyWord ts of
+      Just (dep, WordToken "and" : rest) -> go (acc ++ [dep]) rest
+      Just (dep, rest) -> Just (acc ++ [dep], rest)
+      Nothing -> Just (acc, ts)
+
+-- Generic token matchers
+satisfyWord :: [Token] -> Maybe (String, [Token])
+satisfyWord (WordToken w : rest) = Just (w, rest)
+satisfyWord _ = Nothing
+
+satisfyPercentage :: [Token] -> Maybe (Double, [Token])
+satisfyPercentage (PercentageToken p : rest) = Just (p, rest)
+satisfyPercentage _ = Nothing
 
 expectWord :: String -> [Token] -> Maybe [Token]
 expectWord expected (WordToken actual : rest)
@@ -63,19 +69,12 @@ expectWord expected (WordToken actual : rest)
   | otherwise = Nothing
 expectWord _ _ = Nothing
 
-parseUptime :: [Token] -> Maybe (Double, [Token])
-parseUptime (PercentageToken uptime : rest) = Just (uptime, rest)
-parseUptime _ = Nothing
+expectWords :: [String] -> [Token] -> Maybe [Token]
+expectWords [] ts = Just ts
+expectWords (w : ws) ts = do
+  rest <- expectWord w ts
+  expectWords ws rest
 
-parseDependencies :: [Token] -> Maybe ([String], [Token])
-parseDependencies tokens = case parseName tokens of
-  Nothing -> Just ([], tokens) -- "nothing" case
-  Just (firstDep, rest) -> parseDependencyList [firstDep] rest
-  where
-    parseDependencyList deps (WordToken "and" : rest) = case parseName rest of
-      Just (nextDep, remaining) -> parseDependencyList (deps ++ [nextDep]) remaining
-      Nothing -> Just (deps, WordToken "and" : rest)
-    parseDependencyList deps rest = Just (deps, rest)
-
-takeUsedTokens :: [Token] -> [Token] -> [Token]
-takeUsedTokens original remaining = take (length original - length remaining) original
+expectPeriod :: [Token] -> Maybe [Token]
+expectPeriod (PeriodToken : rest) = Just rest
+expectPeriod _ = Nothing

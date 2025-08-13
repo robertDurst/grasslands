@@ -6,7 +6,9 @@ module Parser
   )
 where
 
+import Control.Applicative ((<|>))
 import Lexer (Token (..))
+import Text.Parsec hiding ((<|>))
 
 data System = System
   {systemComponents :: [Component]}
@@ -23,58 +25,69 @@ makeComponent :: String -> Double -> [String] -> Component
 makeComponent name uptimeExpectation dependencies =
   Component {name = name, uptimeExpectation = uptimeExpectation, dependencies = dependencies}
 
--- Entry point
+type TokenParser = Parsec [Token] ()
+
 parser :: [Token] -> System
-parser = System . go
+parser tokens =
+  case parse systemParser "" tokens of
+    Left err -> error $ "Parser failed: " ++ show err
+    Right system -> system
+
+systemParser :: TokenParser System
+systemParser = do
+  components <- many componentParser
+  eof
+  return $ System components
+
+componentParser :: TokenParser Component
+componentParser = do
+  name <- wordToken
+  expectWords ["expects", "an", "uptime", "of"]
+  uptime <- percentageToken
+  expectWords ["and", "depends", "on"]
+  deps <- dependenciesParser
+  seperatorToken
+  return $ Component name uptime deps
+
+dependenciesParser :: TokenParser [String]
+dependenciesParser = nothingParser <|> dependencyListParser
   where
-    go [] = []
-    go ts = case parseComponent ts of
-      Just (c, rest) -> c : go rest
-      Nothing -> []
+    nothingParser = do
+      expectWord "nothing"
+      return []
 
--- Component parser
-parseComponent :: [Token] -> Maybe (Component, [Token])
-parseComponent tokens = do
-  (n, t1) <- satisfyWord tokens
-  t2 <- expectWords ["expects", "an", "uptime", "of"] t1
-  (uptime, t3) <- satisfyPercentage t2
-  t4 <- expectWords ["and", "depends", "on"] t3
-  (deps, t5) <- parseDependencies t4
-  rest <- expectPeriod t5
-  pure (Component n uptime deps, rest)
+    dependencyListParser = do
+      first <- wordToken
+      rest <- many (expectWord "and" >> wordToken)
+      return (first : rest)
 
--- Dependency list parser
-parseDependencies :: [Token] -> Maybe ([String], [Token])
-parseDependencies tokens = case satisfyWord tokens of
-  Just ("nothing", rest) -> Just ([], rest) -- Special case: "nothing" means no dependencies
-  _ -> go [] tokens
+wordToken :: TokenParser String
+wordToken = tokenPrim show updatePos testWord
   where
-    go acc ts = case satisfyWord ts of
-      Just (dep, WordToken "and" : rest) -> go (acc ++ [dep]) rest
-      Just (dep, rest) -> Just (acc ++ [dep], rest)
-      Nothing -> Just (acc, ts)
+    testWord (WordToken w) = Just w
+    testWord _ = Nothing
+    updatePos pos _ _ = incSourceColumn pos 1
 
--- Generic token matchers
-satisfyWord :: [Token] -> Maybe (String, [Token])
-satisfyWord (WordToken w : rest) = Just (w, rest)
-satisfyWord _ = Nothing
+percentageToken :: TokenParser Double
+percentageToken = tokenPrim show updatePos testPercentage
+  where
+    testPercentage (PercentageToken p) = Just p
+    testPercentage _ = Nothing
+    updatePos pos _ _ = incSourceColumn pos 1
 
-satisfyPercentage :: [Token] -> Maybe (Double, [Token])
-satisfyPercentage (PercentageToken p : rest) = Just (p, rest)
-satisfyPercentage _ = Nothing
+seperatorToken :: TokenParser ()
+seperatorToken = tokenPrim show updatePos testSeperator
+  where
+    testSeperator SeperatorToken = Just ()
+    testSeperator _ = Nothing
+    updatePos pos _ _ = incSourceColumn pos 1
 
-expectWord :: String -> [Token] -> Maybe [Token]
-expectWord expected (WordToken actual : rest)
-  | expected == actual = Just rest
-  | otherwise = Nothing
-expectWord _ _ = Nothing
+expectWord :: String -> TokenParser ()
+expectWord expected = tokenPrim show updatePos testExpected
+  where
+    testExpected (WordToken actual) | actual == expected = Just ()
+    testExpected _ = Nothing
+    updatePos pos _ _ = incSourceColumn pos 1
 
-expectWords :: [String] -> [Token] -> Maybe [Token]
-expectWords [] ts = Just ts
-expectWords (w : ws) ts = do
-  rest <- expectWord w ts
-  expectWords ws rest
-
-expectPeriod :: [Token] -> Maybe [Token]
-expectPeriod (SeperatorToken : rest) = Just rest
-expectPeriod _ = Nothing
+expectWords :: [String] -> TokenParser ()
+expectWords words = mapM_ expectWord words

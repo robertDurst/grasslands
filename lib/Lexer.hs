@@ -12,7 +12,7 @@ import Text.Parsec.String
 data Token
   = PercentageToken Double
   | WordToken String
-  | PeriodToken
+  | SeperatorToken
   deriving (Show, Eq)
 
 lexicalAnalysis :: String -> [Token]
@@ -31,7 +31,7 @@ tokenizer = do
     skipWhitespace = skipMany (space <|> newline)
 
 parseToken :: Parser Token
-parseToken = percentageToken <|> wordToken <|> periodToken
+parseToken = percentageToken <|> wordToken <|> seperatorToken
 
 percentageToken :: Parser Token
 percentageToken = do
@@ -44,10 +44,10 @@ wordToken = do
   word <- many1 (satisfy isAlpha)
   return $ WordToken word
 
-periodToken :: Parser Token
-periodToken = do
+seperatorToken :: Parser Token
+seperatorToken = do
   _ <- char '.'
-  return PeriodToken
+  return SeperatorToken
 
 number :: Parser Double
 number = do

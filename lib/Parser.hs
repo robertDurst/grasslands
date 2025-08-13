@@ -46,7 +46,7 @@ parseComponent tokens = do
 -- Dependency list parser
 parseDependencies :: [Token] -> Maybe ([String], [Token])
 parseDependencies tokens = case satisfyWord tokens of
-  Just ("nothing", rest) -> Just ([], rest)  -- Special case: "nothing" means no dependencies
+  Just ("nothing", rest) -> Just ([], rest) -- Special case: "nothing" means no dependencies
   _ -> go [] tokens
   where
     go acc ts = case satisfyWord ts of
@@ -76,5 +76,5 @@ expectWords (w : ws) ts = do
   expectWords ws rest
 
 expectPeriod :: [Token] -> Maybe [Token]
-expectPeriod (PeriodToken : rest) = Just rest
+expectPeriod (SeperatorToken : rest) = Just rest
 expectPeriod _ = Nothing
